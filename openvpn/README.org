@@ -1,0 +1,31 @@
+* FAQ
+** Understanding OpenVPN offerings (3)
+| Features                                                   | OpenVPN open source | OpenVPN Access Server | CloudConnexa |
+|------------------------------------------------------------+---------------------+-----------------------+--------------|
+| TLS encrypted VPN tunnels                                  | ✓                   | ✓                     | -            |
+| Graphical web interface                                    | -                   | ✓                     | -            |
+| Automated certificate creation                             | -                   | ✓                     | -            |
+| Pre-configured client software                             | -                   | ✓                     | -            |
+| Easy deployment                                            | -                   | ✓                     | ✓            |
+| Pre-built virtual appliances                               | -                   | ✓                     | ✓            |
+| Simple user management                                     | -                   | ✓                     | -            |
+| High-availability failover solution                        | -                   | ✓                     | -            |
+| Multi-node cluster solution                                | -                   | -                     | ✓            |
+| Easy scalability                                           | -                   | -                     | ✓            |
+| Configurable encryption ciphers                            | ✓                   | ✓                     | -            |
+| LDAP support included                                      | -                   | ✓                     | -            |
+| RADIUS support included                                    | -                   | ✓                     | -            |
+| Multi-daemon mode                                          | -                   | ✓                     | -            |
+| Connect networks with overlapping IP subnets               | -                   | -                     | ✓            |
+| Restricted internet access                                 | -                   | -                     | ✓            |
+| Site-to-site connections                                   | ✓                   | ✓                     | ✓            |
+| Cloud-based service                                        | -                   | -                     | ✓            |
+| Value-added security features (content filtering, IDS/IPS) | -                   | -                     | ✓            |
+
+Main differences:
+1. OpenVPN open source is a self-hosted, open-source solution, while OpenVPN Access Server and CloudConnexa are commercial products.
+2. OpenVPN Access Server offers a graphical web interface, automated certificate creation, pre-configured client software, and advanced user management features that the open-source version lacks.
+3. CloudConnexa is a cloud-based service that provides easy deployment, scalability, and value-added security features like content filtering and IDS/IPS, which the other two solutions do not offer.
+4. Both OpenVPN Access Server and CloudConnexa support connecting networks with overlapping IP subnets and provide site-to-site connectivity, while the open-source version only supports site-to-site connections.
+* OpenVPN selfhosted
+This is focused on running openVPN selfhosted with nixos

@@ -1,0 +1,2 @@
+* Assumption
+This assumes you've somehow already have a instance installed nixos in it.

@@ -1,0 +1,54 @@
+We're using [[https://tailscale.com/][Tailscale]] in [[https://tailscale.com/kb/1019/subnets][subnet router]] mode.
+
+Following official blog-posts outline the process used here:
+- [[https://tailscale.com/kb/1021/install-aws][Connect to an AWS VPC using subnet routes · Tailscale Docs]]
+- [[https://tailscale.com/kb/1141/aws-rds][Access AWS RDS privately using Tailscale · Tailscale Docs]]
+
+* Steps
+** Step0: Have a working tailscale setup
+- Have a tailscale account
+- Create a tailnet
+- Add your machine as a device in the tailnet
+- From the keys page, get an ~auth_key~ so that we can programatically add machines to the tailnet.
+
+** Step1: Subnet router(VPN instance) setup
+#+begin_quote
+All of the following sub-steps in this section(step1) are automated via terraform and nix. Setting up the base infra sets up the machine and running ~just nix-spin~ inside ~/scripts/nix~ would provision that machine with the tailscale subnet router.
+
+If you're using this automation you'd also want to store the tailscale auth key is aws ssm parameter store in ~TAILSCALE_AUTH_KEY~ (this parameter is already created as part of terraform infra deployment, just update the value)
+#+end_quote
+- Create a EC2 machine in a public subnet
+- Make sure IP forwarding is enabled on the host where we're running the subnet router, Usually done via setting ~net.ipv4.ip_forward~ in ~sysctl~.
+- Install and run tailscale on that instance with
+  #+begin_src
+  tailscale up --advertise-routes="10.0.3.0/24,10.0.4.0/24" --accept-dns=false --auth-key <auth_key>
+  #+end_src
+  Assuming our private subnets are ~10.0.3.X and 10.0.4.X~ here, this will turn the instance into a tailscale subnet router which will now be advertising the routes ~10.0.3.X and 10.0.4.X~. i.e the subnet router(the ec2 instance) itself is in a public subnet(eg. ~10.0.2.X~) but by virtue of how [[https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html#route-table-longest-prefix-match][VPCs and routing tables in AWS work]] devices in any subnet know how to reach devices. We'll limit access by using security groups.
+- Have an appropriate ~aws security group~ (eg. ~vpn_sg~) and subsequent rules that allows access to the machines/instances from the ~vpn_sg~.
+** Step2: Tailscale configuration
+Once we've setup the subnet router correctly, we'd need to make 2 changes in the tailscale Admin console manually.
+1. Approve the route from the UI(in the machines tab)
+2. Set ACLs to allow access to those subnets. Eg.
+#+begin_src js
+{
+  "action": "accept",
+  "src":    ["group:engteam"],
+  "dst":    ["10.0.3.0/24:*", "10.0.4.0/24:*"],
+}
+#+end_src
+** Step4: Client configuration
+- We should now run our tailscale client on our machine(laptop) with ~--accept-routes=true~ flag.
+- Now we can verify that we in-fact have new aws private routes with: ~ip route show table all~. It'll look something like this:
+  #+begin_src shell
+10.0.3.0/24 dev tailscale0 table 52 // private
+10.0.4.0/24 dev tailscale0 table 52 // private
+100.72.113.11 dev tailscale0 table 52 // normal tailscale ip
+100.78.177.17 dev tailscale0 table 52 // normal tailscale ip
+  #+end_src
+- At this point we should be able to access our instances in our private subnets/inside security groups from our home laptop. Eg. if a instance is running at ~10.0.4.25~ we'll be able to access it directly now.
+** Step5: Optimizations/Enhancements (optional)
+*** Split DNS setup
+- We usually don't need a DNS unless we're using internal DNS because AWS dns names such as an rds db in private subnet has a dns name like ~db.xyz.us-east-1.rds.amazonaws.com~ but this points to a private IP and this address is resolvable from the public internet we don't need a separate resolver for this.
+- However if we're running an internal resolver, we'd probably want to use tailscale Split DNS feature. (we don't currently)
+*** UDP performance
+See [[https://tailscale.com/kb/1320/performance-best-practices][Performance best practices · Tailscale Docs]]
